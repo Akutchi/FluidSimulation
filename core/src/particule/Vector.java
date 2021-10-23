@@ -37,6 +37,10 @@ public class Vector {
         return Math.sqrt(Math.pow(_xCenter, 2) + Math.pow(_yCenter, 2));
     }
 
+    public boolean compareCoordinatesSign(Vector v) {
+        return (_xCenter * v._yCenter > 0) && (_yCenter * v._yCenter > 0);
+    }
+
     public void print() {
         System.out.println("(" + _xCenter + "; " + _yCenter + ")");
     }

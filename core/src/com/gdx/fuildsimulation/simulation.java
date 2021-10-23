@@ -1,7 +1,6 @@
 package com.gdx.fuildsimulation;
 
 import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -12,6 +11,11 @@ public class simulation extends ApplicationAdapter {
     SpriteBatch batch;
     ShapeRenderer sr;
     Particule p;
+
+    Vector[] vList = {new Vector(100, 100),
+            new Vector(200, 100),
+            new Vector(200, 200),
+            new Vector(100, 200)};
 
     @Override
     public void create() {

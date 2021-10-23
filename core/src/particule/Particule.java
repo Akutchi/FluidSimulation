@@ -17,8 +17,10 @@ public class Particule {
 
     private final int[][] pointInitializer = {{1, 1}, {0, 1}, {-1, 1}, {-1, -1}, {1, -1}};
 
-    private double _drho;
+    private final double _drho;
+    private double _area;
     private double _m;
+
     private Vector _barycenter = new Vector(0.0, 0.0);
 
     private final Vector[] _vectors; // in m
@@ -43,14 +45,15 @@ public class Particule {
 
     private void calculateArea(Vector[] vList) {
         Area area = new Area(vList);
-        _m = area.calculate() * _drho * scale;
+        _area = area.calculate();
+        _m = _area * _drho * scale;
     }
 
     public Particule(Vector[] listOfVertex, double drho) {
         _drho = drho;
         _vectors = listOfVertex;
         _barycenter = updateBarycenter(_vectors);
-        //calculateArea(_vectors);
+        calculateArea(_vectors);
         _velocity[0] = new Vector(0.0, 0.0);
         _acceleration[0] = new Vector(0.0, 0.0);
     }
@@ -89,9 +92,12 @@ public class Particule {
 
     public void print(boolean trace) {
 
+        System.out.println(" ---------------- ");
+
         System.out.print("Barycenter : ");
         _barycenter.print();
         System.out.println("Rho = " + _drho + " kg.m-3");
+        System.out.println("A = " + _area * scale + " m^2");
         System.out.println("m = " + _m + " kg");
 
         if (trace) {
