@@ -6,9 +6,11 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Particule {
 
-    private static final int RANGEX = 100;
-    private static final int RANGEY = 100;
-    private static final double scale = 1E-6 / 100; // m.pixels-1
+    private static final int STARTX = 100;
+    private static final int STARTY = 900;
+    private static final int RANGEX = 50;
+    private static final int RANGEY = 50;
+    private static final double scale = 1; // m.pixels-1
 
     // all of the units are in standart units.
     private static final double dt = 0.01;
@@ -24,19 +26,19 @@ public class Particule {
     private Vector _barycenter = new Vector(0.0, 0.0);
 
     private final Vector[] _vectors; // in m
-    private final Vector[] _velocity = new Vector[2]; // m.s-1
-    private final Vector[] _acceleration = new Vector[2]; // m.s-2
+    private final Vector[] _velocity = {new Vector(0, 0), new Vector(0, 0)}; // m.s-1
+    private final Vector[] _acceleration = {new Vector(0, 0), new Vector(0, 0)}; // m.s-2
 
 
     private void initializeForm(int numberOfFaces) {
 
-        Vector previousVector = new Vector(100 + Math.random() * RANGEX, 300);
+        Vector previousVector = new Vector((STARTX + Math.random() * RANGEX) * scale, STARTY * scale);
         Vector currentVector;
 
         for (int i = 0; i < numberOfFaces; i++) {
 
-            double dx = pointInitializer[i][0] * Math.random() * RANGEX;
-            double dy = pointInitializer[i][1] * Math.random() * RANGEY;
+            double dx = pointInitializer[i][0] * Math.random() * RANGEX * scale;
+            double dy = pointInitializer[i][1] * Math.random() * RANGEY * scale;
             currentVector = previousVector.add(new Vector(dx, dy));
             _vectors[i] = currentVector;
             previousVector = currentVector;
@@ -49,13 +51,42 @@ public class Particule {
         _m = _area * _drho * scale;
     }
 
+    private Vector computeGravity() {
+        return gravity.mult(_m);
+    }
+
+    private void shift(Vector[] quantity, Vector q) {
+        quantity[0] = quantity[1];
+        quantity[1] = q;
+    }
+
+    private void computePosition() {
+        for (int i = 0; i < _vectors.length; i++) {
+            Vector p = _velocity[1].mult(dt).add(_vectors[i]);
+            _vectors[i] = p;
+        }
+    }
+
+    private void computeVelocity() {
+        Vector v = _acceleration[1].mult(dt).add(_velocity[1]);
+        shift(_velocity, v);
+    }
+
+    private void computeAcceleration(Vector forces) {
+        shift(_acceleration, forces.add(computeGravity()).mult(1.0 / _m));
+    }
+
+    private void computeState(Vector forces) {
+        computeAcceleration(forces);
+        computeVelocity();
+        computePosition();
+    }
+
     public Particule(Vector[] listOfVertex, double drho) {
         _drho = drho;
         _vectors = listOfVertex;
         _barycenter = updateBarycenter(_vectors);
         calculateArea(_vectors);
-        _velocity[0] = new Vector(0.0, 0.0);
-        _acceleration[0] = new Vector(0.0, 0.0);
     }
 
     public Particule(int numberOfFaces, double drho) {
@@ -64,8 +95,6 @@ public class Particule {
         initializeForm(numberOfFaces);
         calculateArea(_vectors);
         _barycenter = updateBarycenter(_vectors);
-        _velocity[0] = new Vector(0.0, 0.0);
-        _acceleration[0] = new Vector(0.0, 0.0);
     }
 
     public Particule(int numberOfFaces, Vector[] initialConditions, double drho) {
@@ -75,8 +104,8 @@ public class Particule {
         calculateArea(_vectors);
         _barycenter = updateBarycenter(_vectors);
 
-        _velocity[0] = initialConditions[1];
-        _acceleration[0] = initialConditions[2];
+        _velocity[1] = initialConditions[1];
+        _acceleration[1] = initialConditions[2];
     }
 
     public Vector updateBarycenter(Vector[] arrayOfVector) {
@@ -107,8 +136,9 @@ public class Particule {
         }
     }
 
-    public void render(ShapeRenderer sr) {
-        objectRenderer rd = new objectRenderer();
-        rd.render(sr, _vectors);
+    public void render(ShapeRenderer sr, Vector forces) {
+        computeState(forces);
+        objectRenderer rd = new objectRenderer(sr, scale);
+        rd.render(rd, _vectors);
     }
 }

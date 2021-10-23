@@ -5,48 +5,47 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Vector {
 
-    private final double _xCenter;
-    private final double _yCenter;
+    private final double _x;
+    private final double _y;
 
     public Vector(double x, double y) {
-        _xCenter = x;
-        _yCenter = y;
+        _x = x;
+        _y = y;
     }
 
     public Vector add(Vector p) {
-        return new Vector(_xCenter + p._xCenter, _yCenter + p._yCenter);
+        return new Vector(_x + p._x, _y + p._y);
     }
 
     public Vector soustract(Vector p) {
-        return new Vector(_xCenter - p._xCenter, _yCenter - p._yCenter);
+        return new Vector(_x - p._x, _y - p._y);
     }
 
     public Vector mult(double n) {
-        return new Vector(_xCenter * n, _yCenter * n);
+        return new Vector(_x * n, _y * n);
     }
 
     public double mult(Vector v) {
-        return v._xCenter * _xCenter + v._yCenter * _yCenter;
+        return v._x * _x + v._y * _y;
     }
 
     public double det(Vector v) {
-        return _xCenter * v._yCenter - _yCenter * v._xCenter;
+        return _x * v._y - _y * v._x;
     }
 
     public double magnitude() {
-        return Math.sqrt(Math.pow(_xCenter, 2) + Math.pow(_yCenter, 2));
+        return Math.sqrt(Math.pow(_x, 2) + Math.pow(_y, 2));
     }
 
     public boolean compareCoordinatesSign(Vector v) {
-        return (_xCenter * v._yCenter > 0) && (_yCenter * v._yCenter > 0);
+        return (_x * v._y > 0) && (_y * v._y > 0);
     }
 
     public void print() {
-        System.out.println("(" + _xCenter + "; " + _yCenter + ")");
+        System.out.println("(" + _x + "; " + _y + ")");
     }
 
-    public void render(ShapeRenderer sr, Vector p) {
-        objectRenderer rd = new objectRenderer();
-        rd.render(sr, _xCenter, _yCenter, p._xCenter, p._yCenter);
+    public void render(objectRenderer rd, Vector p) {
+        rd.render(_x, _y, p._x, p._y);
     }
 }
