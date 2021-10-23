@@ -10,6 +10,11 @@ public class Area {
 
     private final ArrayList<Vector> _vectors = new ArrayList<>();
 
+    /**
+     * Transform an array of points into an array of "real" vectors
+     *
+     * @param vectors the result
+     */
     public Area(Vector[] vectors) {
         for (int i = 0; i < vectors.length - 1; i++) {
             Vector dv = vectors[i + 1].soustract(vectors[i]);
@@ -18,22 +23,44 @@ public class Area {
         _vectors.add(vectors[vectors.length - 1].soustract(vectors[0]));
     }
 
+    /**
+     * calculate the area of a small elemental triangle
+     *
+     * @param u first vector
+     * @param v adjacent vector to u
+     * @return the area of the triangle u v u+v
+     */
     private double calculateElementOfArea(Vector u, Vector v) {
         return u.det(v) / 2.0;
     }
 
+    /**
+     * Verify if two vectors are in the same quarter in the trigonometric circle
+     *
+     * @param u first vector
+     * @param v second vector
+     * @return true if in the same quarter, false otherwise
+     */
     private boolean areInSameQuarter(Vector u, Vector v) {
         return u.compareCoordinatesSign(v);
     }
 
+    /**
+     * Verify if two vectors are parralel
+     *
+     * @param u first vector
+     * @param v second vector
+     * @return true if parrallel, false otherwise
+     */
     private boolean areParallel(Vector u, Vector v) {
         return Math.abs(u.mult(v) - Math.pow(u.magnitude(), 2)) < 0.01;
     }
 
     /**
-     * Calculate the area of the particule with the following alogirthm
+     * Calculate the area of the particule with the following algorithm
      * 1. take a vector u and one of its adjacent one v
-     * 2. if they curve inwards, calculate the area of the triangle formed by u, v and u+v
+     * 2. if they curve inwards (a.k.a not in the same quarter in the trigonometric circle),
+     * calculate the area of the triangle formed by u, v and u+v
      * 3. remove u and v from the list and insert u+v
      * 4. if not, repeat the process for v
      *
@@ -65,6 +92,11 @@ public class Area {
         return _area;
     }
 
+    /**
+     * Print the current area at operation n
+     *
+     * @param stateNumber nth operation
+     */
     public void printState(int stateNumber) {
         System.out.println("Sate " + stateNumber + " ------------");
         for (Vector v : _vectors) {
