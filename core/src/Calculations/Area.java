@@ -1,7 +1,5 @@
 package Calculations;
 
-import particule.Vector;
-
 import java.util.ArrayList;
 
 public class Area {

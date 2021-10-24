@@ -1,7 +1,6 @@
-package particule;
+package Calculations;
 
 import Draw.objectRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Vector {
 
@@ -39,6 +38,13 @@ public class Vector {
 
     public boolean compareCoordinatesSign(Vector v) {
         return (_x * v._y > 0) && (_y * v._y > 0);
+    }
+
+    public double extract(int index) {
+        if (index < 2) {
+            return index == 0 ? _x : _y;
+        }
+        return 0;
     }
 
     public void print() {

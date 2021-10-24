@@ -1,10 +1,12 @@
 package particule;
 
 import Calculations.Area;
+import Calculations.TensorDecomposition;
+import Calculations.Vector;
 import Draw.objectRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
-public class Particule {
+public class Particle {
 
     private static final int STARTX = 100;
     private static final int STARTY = 900;
@@ -28,9 +30,12 @@ public class Particule {
     private final Vector[] _vectors; // in m
     private final Vector[] _velocity = {new Vector(0, 0), new Vector(0, 0)}; // m.s-1
     private final Vector[] _acceleration = {new Vector(0, 0), new Vector(0, 0)}; // m.s-2
+    private TensorDecomposition[] _velocityGradient;
 
 
     private void initializeForm(int numberOfFaces) {
+
+        _velocityGradient = new TensorDecomposition[numberOfFaces];
 
         Vector previousVector = new Vector((STARTX + Math.random() * RANGEX) * scale, STARTY * scale);
         Vector currentVector;
@@ -82,14 +87,14 @@ public class Particule {
         computePosition();
     }
 
-    public Particule(Vector[] listOfVertex, double drho) {
+    public Particle(Vector[] listOfVertex, double drho) {
         _drho = drho;
         _vectors = listOfVertex;
         _barycenter = updateBarycenter(_vectors);
         calculateArea(_vectors);
     }
 
-    public Particule(int numberOfFaces, double drho) {
+    public Particle(int numberOfFaces, double drho) {
         _drho = drho;
         _vectors = new Vector[numberOfFaces];
         initializeForm(numberOfFaces);
@@ -97,7 +102,7 @@ public class Particule {
         _barycenter = updateBarycenter(_vectors);
     }
 
-    public Particule(int numberOfFaces, Vector[] initialConditions, double drho) {
+    public Particle(int numberOfFaces, Vector[] initialConditions, double drho) {
         _drho = drho;
         _vectors = new Vector[numberOfFaces];
         initializeForm(numberOfFaces);
