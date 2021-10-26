@@ -40,6 +40,10 @@ public class Vector {
         return (_x * v._y > 0) && (_y * v._y > 0);
     }
 
+    public double soustrCoord(Vector v, int type) {
+        return type == 0 ? _x - v._x : _y - v._y;
+    }
+
     public double extract(int index) {
         if (index < 2) {
             return index == 0 ? _x : _y;

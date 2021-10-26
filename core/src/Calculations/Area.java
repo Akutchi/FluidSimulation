@@ -33,14 +33,15 @@ public class Area {
     }
 
     /**
-     * Verify if two vectors are in the same quarter in the trigonometric circle
+     * Verify if two vectors have an angle of more than pi
      *
      * @param u first vector
      * @param v second vector
      * @return true if in the same quarter, false otherwise
      */
-    private boolean areInSameQuarter(Vector u, Vector v) {
-        return u.compareCoordinatesSign(v);
+    private boolean isAngleLowerThanPi(Vector u, Vector v) {
+        double rad = u.mult(v) / (u.magnitude() * v.magnitude());
+        return Math.toDegrees(Math.acos(rad)) < 180;
     }
 
     /**
@@ -76,7 +77,7 @@ public class Area {
             vi = _vectors.get(index);
             vi_1 = _vectors.get(index + 1);
 
-            if (!areInSameQuarter(vi, vi_1)) {
+            if (isAngleLowerThanPi(vi, vi_1)) {
                 Vector w = vi.add(vi_1);
                 _area += calculateElementOfArea(vi, vi_1);
 

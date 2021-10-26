@@ -1,54 +1,38 @@
 package particule;
 
 import Calculations.Area;
-import Calculations.TensorDecomposition;
 import Calculations.Vector;
 import Draw.objectRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 public class Particle {
 
-    private static final int STARTX = 100;
-    private static final int STARTY = 900;
-    private static final int RANGEX = 50;
-    private static final int RANGEY = 50;
-    private static final double scale = 1; // m.pixels-1
+    private static final int STARTX = 200;
+    private static final int STARTY = 500;
+    private static final int RANGEX = 20;
+    private static final int RANGEY = 20;
+    private static final double scale = 0.08; // m.pixels-1
+    private static final int distance = 10;
 
     // all of the units are in standart units.
     private static final double dt = 0.01;
     private static final double g = 9.81;
     private static final Vector gravity = new Vector(0.0, -g);
 
-    private final int[][] pointInitializer = {{1, 1}, {0, 1}, {-1, 1}, {-1, -1}, {1, -1}};
-
-    private final double _drho;
+    private double _drho;
     private double _area;
     private double _m;
 
-    private Vector _barycenter = new Vector(0.0, 0.0);
+    private Vector _oldBarycenter;
+    private Vector _barycenter;
 
-    private final Vector[] _vectors; // in m
+    private Vector[] _vectors; // in m  - the last point is the barycenter
     private final Vector[] _velocity = {new Vector(0, 0), new Vector(0, 0)}; // m.s-1
     private final Vector[] _acceleration = {new Vector(0, 0), new Vector(0, 0)}; // m.s-2
-    private TensorDecomposition[] _velocityGradient;
 
-
-    private void initializeForm(int numberOfFaces) {
-
-        _velocityGradient = new TensorDecomposition[numberOfFaces];
-
-        Vector previousVector = new Vector((STARTX + Math.random() * RANGEX) * scale, STARTY * scale);
-        Vector currentVector;
-
-        for (int i = 0; i < numberOfFaces; i++) {
-
-            double dx = pointInitializer[i][0] * Math.random() * RANGEX * scale;
-            double dy = pointInitializer[i][1] * Math.random() * RANGEY * scale;
-            currentVector = previousVector.add(new Vector(dx, dy));
-            _vectors[i] = currentVector;
-            previousVector = currentVector;
-        }
-    }
 
     private void calculateArea(Vector[] vList) {
         Area area = new Area(vList);
@@ -60,7 +44,7 @@ public class Particle {
         return gravity.mult(_m);
     }
 
-    private void shift(Vector[] quantity, Vector q) {
+    private void shiftValue(Vector[] quantity, Vector q) {
         quantity[0] = quantity[1];
         quantity[1] = q;
     }
@@ -70,15 +54,17 @@ public class Particle {
             Vector p = _velocity[1].mult(dt).add(_vectors[i]);
             _vectors[i] = p;
         }
+        _oldBarycenter = _barycenter;
+        _barycenter = _barycenter.add(_velocity[1].mult(dt));
     }
 
     private void computeVelocity() {
         Vector v = _acceleration[1].mult(dt).add(_velocity[1]);
-        shift(_velocity, v);
+        shiftValue(_velocity, v);
     }
 
     private void computeAcceleration(Vector forces) {
-        shift(_acceleration, forces.add(computeGravity()).mult(1.0 / _m));
+        shiftValue(_acceleration, forces.add(computeGravity()).mult(1.0 / _m));
     }
 
     private void computeState(Vector forces) {
@@ -87,30 +73,101 @@ public class Particle {
         computePosition();
     }
 
+    private Vector[] getMinMaxCoords(final int typeOfCoord) {
+        Vector[] sortCoord = new Vector[_vectors.length];
+        System.arraycopy(_vectors, 0, sortCoord, 0, _vectors.length);
+        Arrays.sort(sortCoord, new Comparator<Vector>() {
+            @Override
+            public int compare(Vector u, Vector v) {
+                return (int) u.soustrCoord(v, typeOfCoord);
+            }
+        });
+
+        return new Vector[]{sortCoord[0], sortCoord[sortCoord.length - 1]};
+    }
+
+    private boolean collisionBorders(int width) {
+        Vector[] minMaxVectorSortedX = getMinMaxCoords(0);
+        Vector minVectorSortedY = getMinMaxCoords(1)[0];
+
+        System.out.println(minMaxVectorSortedX[0].extract(0));
+
+        boolean collisionUnder = minVectorSortedY.extract(1) < distance;
+        boolean collisionLeft = minMaxVectorSortedX[0].extract(0) < distance;
+        boolean collisionRight = minMaxVectorSortedX[1].extract(0) > width - distance;
+        System.out.println(collisionLeft + " " + collisionRight + " " + collisionUnder);
+
+        return collisionLeft || collisionRight || collisionUnder;
+    }
+
+
+    private void initializeRandomForm(int numberOfFaces) {
+
+        int[][] pointInitializer = {{1, 1}, {0, 1}, {-1, 1}, {-1, -1}, {1, -1}};
+        Vector previousVector = new Vector((STARTX + Math.random() * RANGEX) * scale, STARTY * scale);
+        Vector currentVector;
+
+        for (int i = 0; i < numberOfFaces; i++) {
+
+            double dx = pointInitializer[i][0] * Math.random() * RANGEX * scale;
+            double dy = pointInitializer[i][1] * Math.random() * RANGEY * scale;
+            currentVector = previousVector.add(new Vector(dx, dy));
+
+            _vectors[i] = currentVector;
+            previousVector = currentVector;
+        }
+    }
+
+    private void initializeCircle(int numberOfFaces) {
+
+        Vector currentVector;
+        double dangle = 2 * Math.PI / numberOfFaces;
+        double Xorigin = (STARTX + Math.random() * RANGEX) * scale;
+        double Yorigin = STARTY * scale;
+
+        for (int i = 0; i < numberOfFaces; i++) {
+
+            double dx = Math.cos(dangle * i) * RANGEX * scale + Xorigin;
+            double dy = Math.sin(dangle * i) * RANGEY * scale + Yorigin;
+
+            currentVector = new Vector(dx, dy);
+            _vectors[i] = currentVector;
+        }
+    }
+
+    private void initializeForm(int numberOfFaces, boolean randomForm) {
+        if (randomForm) {
+            initializeRandomForm(numberOfFaces);
+        } else {
+            initializeCircle(numberOfFaces);
+        }
+    }
+
+    private void initialization(int numberOfFaces, double drho, boolean randomForm) {
+        _drho = drho;
+        _vectors = new Vector[numberOfFaces];
+        initializeForm(numberOfFaces, randomForm);
+        calculateArea(_vectors);
+        _barycenter = updateBarycenter(_vectors);
+        _oldBarycenter = _barycenter;
+    }
+
     public Particle(Vector[] listOfVertex, double drho) {
         _drho = drho;
         _vectors = listOfVertex;
-        _barycenter = updateBarycenter(_vectors);
         calculateArea(_vectors);
+        _barycenter = updateBarycenter(_vectors);
+        _oldBarycenter = _barycenter;
     }
 
-    public Particle(int numberOfFaces, double drho) {
-        _drho = drho;
-        _vectors = new Vector[numberOfFaces];
-        initializeForm(numberOfFaces);
-        calculateArea(_vectors);
-        _barycenter = updateBarycenter(_vectors);
+    public Particle(int numberOfFaces, double drho, boolean randomForm) {
+        initialization(numberOfFaces, drho, randomForm);
     }
 
-    public Particle(int numberOfFaces, Vector[] initialConditions, double drho) {
-        _drho = drho;
-        _vectors = new Vector[numberOfFaces];
-        initializeForm(numberOfFaces);
-        calculateArea(_vectors);
-        _barycenter = updateBarycenter(_vectors);
-
-        _velocity[1] = initialConditions[1];
-        _acceleration[1] = initialConditions[2];
+    public Particle(int numberOfFaces, Vector[] initialConditions, double drho, boolean randomForm) {
+        initialization(numberOfFaces, drho, randomForm);
+        _velocity[1] = initialConditions[0];
+        _acceleration[1] = initialConditions[1];
     }
 
     public Vector updateBarycenter(Vector[] arrayOfVector) {
@@ -122,6 +179,17 @@ public class Particle {
         }
         return newBarycenter.mult(1.0 / arrayOfVector.length);
 
+    }
+
+    public Vector computeReaction(int width) {
+
+        if (collisionBorders(width)) {
+            Vector dv = _barycenter.soustract(_oldBarycenter);
+            double lambda = -g / dv.magnitude();
+            return dv.mult(lambda * _m);
+        }
+
+        return new Vector(0, 0);
     }
 
     public void print(boolean trace) {
