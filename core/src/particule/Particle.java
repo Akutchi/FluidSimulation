@@ -145,7 +145,6 @@ public class Particle {
     }
 
     private void initialization(int numberOfFaces, double drho, boolean randomForm) {
-        _onFloor = false;
         _drho = drho;
         _vectors = new Vector[numberOfFaces];
         initializeForm(numberOfFaces, randomForm);
