@@ -6,15 +6,14 @@ import Draw.objectRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 
 public class Particle {
 
     private static final int STARTX = 200;
     private static final int STARTY = 500;
-    private static final int RANGEX = 20;
-    private static final int RANGEY = 20;
+    private static final int RANGEX = 50;
+    private static final int RANGEY = 50;
     private static final double scale = 0.08; // m.pixels-1
     private static final int distance = 1;
 
@@ -23,19 +22,19 @@ public class Particle {
     private static final double g = 9.81;
     private static final Vector gravity = new Vector(0.0, -g);
 
-    private double _drho;
+    private double _drho; // kg.m-2
     private double _area;
     private double _m;
 
     private Vector _oldBarycenter;
     private Vector _barycenter;
 
-    private Vector[] _vectors; // in m  - the last point is the barycenter
+    private Vector[] _vectors; // in m
     private final Vector[] _velocity = {new Vector(0, 0), new Vector(0, 0)}; // m.s-1
     private final Vector[] _acceleration = {new Vector(0, 0), new Vector(0, 0)}; // m.s-2
 
 
-    private void calculateArea(Vector[] vList) {
+    private void calculateMass(Vector[] vList) {
         Area area = new Area(vList);
         _area = area.calculate();
         _m = _area * _drho * scale;
@@ -64,12 +63,8 @@ public class Particle {
     }
 
     private void computeAcceleration(Vector forces) {
-        Vector sumForces = forces.add(computeGravity()).mult(1.0 / _m);
-        shiftValue(_acceleration, sumForces);
-        if (sumForces.magnitude() < 1E-5) {
-            _acceleration[1] = new Vector(0, 0);
-            _velocity[1] = new Vector(0, 0);
-        }
+        Vector acc = (forces.add(computeGravity())).mult(1.0 / _m);
+        shiftValue(_acceleration, acc);
     }
 
     private void computeState(Vector forces) {
@@ -91,15 +86,16 @@ public class Particle {
         return new Vector[]{sortCoord[0], sortCoord[sortCoord.length - 1]};
     }
 
-    private boolean collisionBorders(int width) {
+    private boolean[] collisionBorders(int width) {
         Vector[] minMaxVectorSortedX = getMinMaxCoords(0);
         Vector minVectorSortedY = getMinMaxCoords(1)[0];
 
-        boolean collisionUnder = minVectorSortedY.extract(1) < distance;
-        boolean collisionLeft = minMaxVectorSortedX[0].extract(0) < distance;
-        boolean collisionRight = minMaxVectorSortedX[1].extract(0) > width - distance;
+        // / scale for the conversion to pixel
+        boolean collisionUnder = minVectorSortedY.extract(1) / scale < distance;
+        boolean collisionLeft = minMaxVectorSortedX[0].extract(0) / scale < distance;
+        boolean collisionRight = minMaxVectorSortedX[1].extract(0) / scale > width - distance;
 
-        return collisionLeft || collisionRight || collisionUnder;
+        return new boolean[]{collisionLeft, collisionRight, collisionUnder};
     }
 
     private void initializeRandomForm(int numberOfFaces) {
@@ -148,7 +144,7 @@ public class Particle {
         _drho = drho;
         _vectors = new Vector[numberOfFaces];
         initializeForm(numberOfFaces, randomForm);
-        calculateArea(_vectors);
+        calculateMass(_vectors);
         _barycenter = updateBarycenter(_vectors);
         _oldBarycenter = _barycenter;
     }
@@ -156,7 +152,7 @@ public class Particle {
     public Particle(Vector[] listOfVertex, double drho) {
         _drho = drho;
         _vectors = listOfVertex;
-        calculateArea(_vectors);
+        calculateMass(_vectors);
         _barycenter = updateBarycenter(_vectors);
         _oldBarycenter = _barycenter;
     }
@@ -181,15 +177,24 @@ public class Particle {
         return newBarycenter.mult(1.0 / arrayOfVector.length);
     }
 
-    public Vector computeReaction(int width) {
+    public Vector computeReaction(int width, double SHOCK_ABSORPTION) {
 
-        if (collisionBorders(width)) {
-            Vector dv = _barycenter.soustract(_oldBarycenter);
-            double lambda = -g / dv.magnitude();
-            return dv.mult(lambda * _m);
+        boolean[] collisions = collisionBorders(width);
+        Vector reactionForce = new Vector(0, 0);
+
+        if (collisions[0]) {
+            reactionForce = reactionForce.add(new Vector(SHOCK_ABSORPTION, 0));
         }
 
-        return new Vector(0, 0);
+        if (collisions[1]) {
+            reactionForce = reactionForce.add(new Vector(-SHOCK_ABSORPTION, 0));
+        }
+
+        if (collisions[2]) {
+            reactionForce = reactionForce.add(new Vector(0, SHOCK_ABSORPTION));
+        }
+
+        return reactionForce;
     }
 
     public void print(boolean trace) {

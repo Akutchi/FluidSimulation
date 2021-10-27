@@ -10,13 +10,14 @@ import particule.Particle;
 
 public class simulation extends ApplicationAdapter {
 
-    int WIDTH;
-    int HEIGHT;
-    SpriteBatch batch;
-    ShapeRenderer sr;
-    Particle p;
-    Vector reactionForce;
-    Vector[] initialConditions;
+    private static final double SHOCK_ABSORPTION = 8E6; // in N
+
+    private int WIDTH;
+    private int HEIGHT;
+    private SpriteBatch batch;
+    private ShapeRenderer sr;
+    private Particle p;
+    private Vector reactionForce;
 
     private void setDimensions() {
         WIDTH = Gdx.graphics.getWidth();
@@ -32,7 +33,7 @@ public class simulation extends ApplicationAdapter {
         batch = new SpriteBatch();
         sr = new ShapeRenderer();
         reactionForce = new Vector(0, 0);
-        initialConditions = new Vector[]{new Vector(0, 0), new Vector(0, 0)};
+        Vector[] initialConditions = new Vector[]{new Vector(20, 0), new Vector(0, 0)};
         p = new Particle(15, initialConditions, 1000, false);
     }
 
@@ -42,7 +43,7 @@ public class simulation extends ApplicationAdapter {
         ScreenUtils.clear(1, 255, 255, 255);
         batch.begin();
         batch.end();
-        reactionForce = p.computeReaction(WIDTH);
+        reactionForce = p.computeReaction(WIDTH, SHOCK_ABSORPTION);
         p.render(sr, reactionForce);
     }
 
