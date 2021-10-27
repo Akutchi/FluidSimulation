@@ -8,8 +8,14 @@ public class Vector {
     private final double _y;
 
     public Vector(double x, double y) {
-        _x = x;
-        _y = y;
+
+        if (!Double.isNaN(x) || !Double.isNaN(y)) {
+            _x = x;
+            _y = y;
+        } else {
+            _x = 0;
+            _y = 0;
+        }
     }
 
     public Vector add(Vector p) {
@@ -34,10 +40,6 @@ public class Vector {
 
     public double magnitude() {
         return Math.sqrt(Math.pow(_x, 2) + Math.pow(_y, 2));
-    }
-
-    public boolean compareCoordinatesSign(Vector v) {
-        return (_x * v._y > 0) && (_y * v._y > 0);
     }
 
     public double soustrCoord(Vector v, int type) {

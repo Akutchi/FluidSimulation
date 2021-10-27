@@ -6,6 +6,7 @@ import Draw.objectRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 
 public class Particle {
@@ -15,7 +16,7 @@ public class Particle {
     private static final int RANGEX = 20;
     private static final int RANGEY = 20;
     private static final double scale = 0.08; // m.pixels-1
-    private static final int distance = 10;
+    private static final int distance = 1;
 
     // all of the units are in standart units.
     private static final double dt = 0.01;
@@ -51,8 +52,7 @@ public class Particle {
 
     private void computePosition() {
         for (int i = 0; i < _vectors.length; i++) {
-            Vector p = _velocity[1].mult(dt).add(_vectors[i]);
-            _vectors[i] = p;
+            _vectors[i] = _velocity[1].mult(dt).add(_vectors[i]);
         }
         _oldBarycenter = _barycenter;
         _barycenter = _barycenter.add(_velocity[1].mult(dt));
@@ -64,7 +64,12 @@ public class Particle {
     }
 
     private void computeAcceleration(Vector forces) {
-        shiftValue(_acceleration, forces.add(computeGravity()).mult(1.0 / _m));
+        Vector sumForces = forces.add(computeGravity()).mult(1.0 / _m);
+        shiftValue(_acceleration, sumForces);
+        if (sumForces.magnitude() < 1E-5) {
+            _acceleration[1] = new Vector(0, 0);
+            _velocity[1] = new Vector(0, 0);
+        }
     }
 
     private void computeState(Vector forces) {
@@ -79,7 +84,7 @@ public class Particle {
         Arrays.sort(sortCoord, new Comparator<Vector>() {
             @Override
             public int compare(Vector u, Vector v) {
-                return (int) u.soustrCoord(v, typeOfCoord);
+                return Double.compare(u.extract(typeOfCoord), v.extract(typeOfCoord));
             }
         });
 
@@ -90,16 +95,12 @@ public class Particle {
         Vector[] minMaxVectorSortedX = getMinMaxCoords(0);
         Vector minVectorSortedY = getMinMaxCoords(1)[0];
 
-        System.out.println(minMaxVectorSortedX[0].extract(0));
-
         boolean collisionUnder = minVectorSortedY.extract(1) < distance;
         boolean collisionLeft = minMaxVectorSortedX[0].extract(0) < distance;
         boolean collisionRight = minMaxVectorSortedX[1].extract(0) > width - distance;
-        System.out.println(collisionLeft + " " + collisionRight + " " + collisionUnder);
 
         return collisionLeft || collisionRight || collisionUnder;
     }
-
 
     private void initializeRandomForm(int numberOfFaces) {
 
@@ -144,6 +145,7 @@ public class Particle {
     }
 
     private void initialization(int numberOfFaces, double drho, boolean randomForm) {
+        _onFloor = false;
         _drho = drho;
         _vectors = new Vector[numberOfFaces];
         initializeForm(numberOfFaces, randomForm);
@@ -178,7 +180,6 @@ public class Particle {
             newBarycenter = newBarycenter.add(vector);
         }
         return newBarycenter.mult(1.0 / arrayOfVector.length);
-
     }
 
     public Vector computeReaction(int width) {
