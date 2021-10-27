@@ -14,6 +14,7 @@ public class Particle {
     private static final int STARTY = 500;
     private static final int RANGEX = 50;
     private static final int RANGEY = 50;
+    /*TODO why 0.08 to have something that works*/
     private static final double scale = 0.08; // m.pixels-1
     private static final int distance = 1;
 
